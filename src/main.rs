@@ -1,15 +1,15 @@
 #[macro_use]
 extern crate clap;
 extern crate env_logger;
-extern crate git2;
 #[macro_use]
 extern crate log;
 
 use clap::{App, Arg};
 use env_logger::Env;
-use git2::Repository;
-use std::path::Path;
 use std::process;
+
+use mdbook_library;
+use mdbook_library::Config;
 
 fn main() {
     env_logger::from_env(Env::default().default_filter_or("info")).init();
@@ -44,6 +44,7 @@ fn main() {
         .value_of("working_dir")
         .unwrap_or("./book_repos")
         .to_string();
+
     info!("Cloning repositories to {}", working_dir);
 
     let config = Config {
@@ -51,33 +52,9 @@ fn main() {
         working_dir,
     };
 
-    let _repo = clone_or_fetch_repo("https://github.com/rust-lang/book.git", &config.working_dir)
-        .unwrap_or_else(|err| {
-            error!("Problem while cloning or fetching repo: {}", err);
-            process::exit(1);
-        });
-}
+    if let Err(e) = mdbook_library::run(config) {
+        error!("Application error: {}", e);
 
-struct Config {
-    pub destination_dir: String,
-    pub working_dir: String,
-}
-
-fn clone_or_fetch_repo(url: &str, working_dir: &str) -> Result<Repository, git2::Error> {
-    let folder = url.split('/').last().unwrap();
-    let dest = Path::new(working_dir).join(folder);
-
-    match Repository::open(&dest) {
-        Ok(repo) => {
-            info!("Found {:?}. Fetching {}", dest, url);
-            repo.find_remote("origin")?
-                .fetch(&["master"], None, None)
-                .unwrap();
-            Ok(repo)
-        }
-        Err(_err) => {
-            info!("Cloning {} to {:?}", url, dest);
-            Repository::clone(url, &dest)
-        }
+        process::exit(1);
     }
 }
