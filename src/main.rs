@@ -1,11 +1,15 @@
 #[macro_use]
 extern crate clap;
+extern crate env_logger;
+extern crate git2;
 #[macro_use]
 extern crate log;
-extern crate env_logger;
 
 use clap::{App, Arg};
 use env_logger::Env;
+use git2::Repository;
+use std::path::{Path, PathBuf};
+use std::process;
 
 fn main() {
     env_logger::from_env(Env::default().default_filter_or("info")).init();
@@ -34,6 +38,28 @@ fn main() {
         matches.value_of("DESTINATION").unwrap()
     );
 
-    let repos = matches.value_of("working_dir").unwrap_or("book_repos");
+    let repos = matches.value_of("working_dir").unwrap_or("./book_repos");
     info!("Cloning repositories to {}", repos);
+
+    let dest = Path::new(repos).join("book");
+
+    let _repo =
+        clone_or_fetch_repo("https://github.com/rust-lang/book.git", dest).unwrap_or_else(|err| {
+            error!("Problem while cloning or fetching repo: {}", err);
+            process::exit(1);
+        });
+}
+
+fn clone_or_fetch_repo(url: &str, dest: PathBuf) -> Result<Repository, git2::Error> {
+    match Repository::open(&dest) {
+        Ok(repo) => {
+            info!("Found {:?}. Fetching {}", dest, url);
+            repo.find_remote("origin")?.fetch(&["master"], None, None).unwrap();
+            Ok(repo)
+        }
+        Err(_err) => {
+            info!("Cloning {} to {:?}", url, dest);
+            Repository::clone(url, &dest)
+        }
+    }
 }
