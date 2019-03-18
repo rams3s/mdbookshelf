@@ -40,7 +40,7 @@ fn main() {
         destination_dir
     );
 
-    let working_dir = matches.value_of("working_dir").unwrap_or("./book_repos");
+    let working_dir = matches.value_of("working_dir").unwrap_or("./repos");
 
     info!("Cloning repositories to {}", working_dir);
 
