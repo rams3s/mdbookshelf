@@ -23,8 +23,9 @@ fn generate_epub_library() {
         .join("The Rust Programming Language.epub");
 
     assert!(!output_file.exists());
-    mdbook_library::run(config).unwrap();
+    let manifest = mdbook_library::run(config).unwrap();
     assert!(output_file.exists());
+    assert_eq!(1, manifest.entries.len());
 
     // :TODO: check second call updates files and uses fetch
 
