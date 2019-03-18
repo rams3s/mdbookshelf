@@ -33,23 +33,28 @@ fn main() {
         )
         .get_matches();
 
-    let destination_dir = matches.value_of("DESTINATION").unwrap().to_string();
+    let destination_dir = matches.value_of("DESTINATION").unwrap();
 
     info!(
         "Running mdbook-library with destination {}",
         destination_dir
     );
 
-    let working_dir = matches
-        .value_of("working_dir")
-        .unwrap_or("./book_repos")
-        .to_string();
+    let working_dir = matches.value_of("working_dir").unwrap_or("./book_repos");
 
     info!("Cloning repositories to {}", working_dir);
+
+    // :TODO: read from config file
+
+    let repo_urls = vec![
+        "https://github.com/rust-lang/book.git",
+        "https://github.com/rust-lang/async-book.git",
+    ];
 
     let config = Config {
         destination_dir,
         working_dir,
+        repo_urls,
     };
 
     if let Err(e) = mdbook_library::run(config) {

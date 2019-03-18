@@ -6,15 +6,17 @@ use git2::Repository;
 use std::error::Error;
 use std::path::Path;
 
-pub struct Config {
-    pub destination_dir: String,
-    pub working_dir: String,
+pub struct Config<'a> {
+    pub destination_dir: &'a str,
+    pub working_dir: &'a str,
+    pub repo_urls: Vec<&'a str>,
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let _repo = clone_or_fetch_repo("https://github.com/rust-lang/book.git", &config.working_dir)?;
-
-    // :TODO:
+    for repo_url in &config.repo_urls {
+        let _repo = clone_or_fetch_repo(repo_url, &config.working_dir)?;
+        // :TODO:
+    }
 
     Ok(())
 }
