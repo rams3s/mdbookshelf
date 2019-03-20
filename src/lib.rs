@@ -76,7 +76,13 @@ pub fn run(config: Config) -> Result<Manifest, Box<dyn Error>> {
 
 fn clone_or_fetch_repo(url: &str, working_dir: &str) -> Result<(Repository, PathBuf), git2::Error> {
     let folder = url.split('/').last().unwrap();
-    let dest = Path::new(working_dir).join(folder);
+    let mut dest = Path::new(working_dir).join(folder);
+
+    // :TRICKY: can't use \ as path separator here because of improper native path handling in some parts of libgit2
+    // see https://github.com/libgit2/libgit2/issues/3012
+    if cfg!(windows) {
+        dest = PathBuf::from( dest.to_str().unwrap().replace( '\\', "/" ) );
+    }
 
     match Repository::open(&dest) {
         Ok(repo) => {
