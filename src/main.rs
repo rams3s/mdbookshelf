@@ -6,7 +6,9 @@ extern crate log;
 
 use clap::{App, Arg};
 use env_logger::Env;
+use std::fs::File;
 use std::process;
+use std::path::Path;
 
 use mdbookshelf;
 use mdbookshelf::Config;
@@ -57,9 +59,15 @@ fn main() {
         repo_urls,
     };
 
-    if let Err(e) = mdbookshelf::run(config) {
-        error!("Application error: {}", e);
-
-        process::exit(1);
+    match mdbookshelf::run(config) {
+        Ok( manifest ) => {
+            let manifest_path = Path::new(destination_dir).join("manifest.json");
+            let f = File::create(manifest_path).expect("Could not create manifest file");
+            serde_json::to_writer_pretty(f, &manifest).expect("Error while writing manifest to file");
+        }
+        Err( e ) => {
+            error!("Application error: {}", e);
+            process::exit(1);
+        }
     }
 }

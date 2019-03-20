@@ -68,9 +68,6 @@ pub fn run(config: Config) -> Result<Manifest, Box<dyn Error>> {
         manifest.entries.push(entry);
     }
 
-    let j = serde_json::to_string(&manifest)?;
-    println!("{}", j);
-
     Ok(manifest)
 }
 
