@@ -5,6 +5,7 @@ authors = ["Ramses Ladlani <rladlani@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+chrono = "0.4.6"
 clap = "2.32.0"
 env_logger = "0.6.1"
 git2 = "0.6.11"
