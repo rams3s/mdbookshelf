@@ -1,5 +1,5 @@
-use mdbook_library;
-use mdbook_library::Config;
+use mdbookshelf;
+use mdbookshelf::Config;
 use std::path::Path;
 
 #[test]
@@ -23,7 +23,7 @@ fn generate_epub_library() {
         .join("The Rust Programming Language.epub");
 
     assert!(!output_file.exists());
-    let manifest = mdbook_library::run(config).unwrap();
+    let manifest = mdbookshelf::run(config).unwrap();
     assert!(output_file.exists());
     assert_eq!(1, manifest.entries.len());
 
@@ -36,5 +36,5 @@ fn generate_epub_library() {
         repo_urls,
     };
 
-    mdbook_library::run(config).unwrap();
+    mdbookshelf::run(config).unwrap();
 }

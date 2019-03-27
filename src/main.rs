@@ -8,14 +8,14 @@ use clap::{App, Arg};
 use env_logger::Env;
 use std::process;
 
-use mdbook_library;
-use mdbook_library::Config;
+use mdbookshelf;
+use mdbookshelf::Config;
 
 fn main() {
     env_logger::from_env(Env::default().default_filter_or("info")).init();
 
-    let matches = App::new("mdbook-library")
-        .about("Executes mdbook on a collection of repositories")
+    let matches = App::new("mdbookshelf")
+        .about("Executes mdbook-epub on a collection of repositories")
         .version(concat!("v", crate_version!()))
         .author("Ramses Ladlani <rladlani@gmail.com>")
         .arg(
@@ -36,7 +36,7 @@ fn main() {
     let destination_dir = matches.value_of("DESTINATION").unwrap();
 
     info!(
-        "Running mdbook-library with destination {}",
+        "Running mdbookshelf with destination {}",
         destination_dir
     );
 
@@ -57,7 +57,7 @@ fn main() {
         repo_urls,
     };
 
-    if let Err(e) = mdbook_library::run(config) {
+    if let Err(e) = mdbookshelf::run(config) {
         error!("Application error: {}", e);
 
         process::exit(1);
