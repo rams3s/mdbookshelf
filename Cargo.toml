@@ -1,5 +1,5 @@
 [package]
-name = "mdbook-library"
+name = "mdbookshelf"
 version = "0.1.0"
 authors = ["Ramses Ladlani <rladlani@gmail.com>"]
 edition = "2018"
