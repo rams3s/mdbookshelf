@@ -40,7 +40,7 @@ fn main() {
                 .short("t")
                 .long("templates_dir")
                 .value_name("TEMPLATES_DIR")
-                .help("Sets the templates directory")
+                .help("Sets the templates directory (if not set, will generate manifest.json)")
                 .takes_value(true),
         )
         .get_matches();
