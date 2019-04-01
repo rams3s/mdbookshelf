@@ -1,24 +1,27 @@
 use mdbookshelf;
-use mdbookshelf::Config;
+use mdbookshelf::config::{BookRepoConfig, Config};
 use std::path::Path;
 
 #[test]
 fn generate_epub_library() {
-    let destination_dir = "epubs";
-    let working_dir = "repos";
+    let destination_dir = "epubs".to_string();
+    let working_dir = "repos".to_string();
 
-    let repo_urls = vec!["https://github.com/rust-lang/book.git"];
+    let book_repo_configs = vec![BookRepoConfig {
+        title: "The book".to_string(),
+        url: "https://github.com/rust-lang/book.git".to_string(),
+    }];
 
     let config = Config {
         destination_dir,
         working_dir,
-        repo_urls,
+        book_repo_configs,
     };
 
-    std::fs::remove_dir_all(destination_dir).unwrap_or_default();
-    std::fs::remove_dir_all(working_dir).unwrap_or_default();
+    std::fs::remove_dir_all(&config.destination_dir).unwrap_or_default();
+    std::fs::remove_dir_all(&config.working_dir).unwrap_or_default();
 
-    let output_file = Path::new(destination_dir)
+    let output_file = Path::new(&config.destination_dir)
         .join("book.git")
         .join("The Rust Programming Language.epub");
 
@@ -29,11 +32,18 @@ fn generate_epub_library() {
 
     // :TODO: check second call updates files and uses fetch
 
-    let repo_urls = vec!["https://github.com/rust-lang/book.git"];
+    let book_repo_configs = vec![BookRepoConfig {
+        title: "The book".to_string(),
+        url: "https://github.com/rust-lang/book.git".to_string(),
+    }];
+
+    let destination_dir = "epubs".to_string();
+    let working_dir = "repos".to_string();
+
     let config = Config {
         destination_dir,
         working_dir,
-        repo_urls,
+        book_repo_configs,
     };
 
     mdbookshelf::run(config).unwrap();

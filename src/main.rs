@@ -11,7 +11,7 @@ use std::path::Path;
 use std::process;
 
 use mdbookshelf;
-use mdbookshelf::Config;
+use mdbookshelf::config::Config;
 
 fn main() {
     env_logger::from_env(Env::default().default_filter_or("info")).init();
@@ -35,30 +35,32 @@ fn main() {
         )
         .get_matches();
 
-    let destination_dir = matches.value_of("DESTINATION").unwrap();
+    let destination_dir = matches.value_of("DESTINATION").unwrap().to_string();
 
     info!("Running mdbookshelf with destination {}", destination_dir);
 
-    let working_dir = matches.value_of("working_dir").unwrap_or("./repos");
+    let working_dir = matches
+        .value_of("working_dir")
+        .unwrap_or("./repos")
+        .to_string();
 
     info!("Cloning repositories to {}", working_dir);
 
-    // :TODO: read from config file
+    let manifest_path = Path::new(&destination_dir).join("manifest.json");
 
-    let repo_urls = vec![
-        "https://github.com/rust-lang/book.git",
-        "https://github.com/rust-lang/async-book.git",
-    ];
-
-    let config = Config {
-        destination_dir,
-        working_dir,
-        repo_urls,
+    let config_location = Path::new("./").join("bookshelf.toml");
+    let mut config = if config_location.exists() {
+        debug!("Loading config from {}", config_location.display());
+        Config::from_disk(&config_location).unwrap_or_default()
+    } else {
+        Config::default()
     };
+
+    config.destination_dir = destination_dir;
+    config.working_dir = working_dir;
 
     match mdbookshelf::run(config) {
         Ok(manifest) => {
-            let manifest_path = Path::new(destination_dir).join("manifest.json");
             info!("Writing manifest to {}", manifest_path.display());
             let f = File::create(manifest_path).expect("Could not create manifest file");
             serde_json::to_writer_pretty(f, &manifest)
