@@ -1,6 +1,6 @@
 extern crate chrono;
 #[macro_use]
-extern crate error_chain;
+extern crate failure;
 extern crate git2;
 #[macro_use]
 extern crate log;
@@ -13,16 +13,12 @@ pub mod config;
 
 use chrono::Utc;
 use config::Config;
+use failure::Error;
 use git2::Repository;
 use mdbook::renderer::RenderContext;
 use mdbook::MDBook;
 use serde::Serialize;
-use std::error::Error;
 use std::path::{Path, PathBuf};
-
-pub mod errors {
-    error_chain! {}
-}
 
 #[derive(Serialize)]
 pub struct ManifestEntry {
@@ -44,8 +40,7 @@ impl Manifest {
     }
 }
 
-// :TODO: use error_chain
-pub fn run(config: Config) -> Result<Manifest, Box<dyn Error>> {
+pub fn run(config: Config) -> Result<Manifest, Error> {
     let mut manifest = Manifest::new();
     manifest.entries.reserve(config.book_repo_configs.len());
 
@@ -54,7 +49,8 @@ pub fn run(config: Config) -> Result<Manifest, Box<dyn Error>> {
         let folder = repo_url.split('/').last().unwrap();
         let (_repo, repo_path) = clone_or_fetch_repo(repo_url, &config.working_dir)?;
 
-        let md = MDBook::load(repo_path)?;
+        let md = MDBook::load(repo_path)
+            .map_err(|e| format_err!("Could not load mdbook at path: {}", e))?;
         let dest = Path::new(&config.destination_dir).join(folder);
 
         let ctx = RenderContext::new(

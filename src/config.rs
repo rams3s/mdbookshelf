@@ -4,15 +4,14 @@
 
 #![deny(missing_docs)]
 
+use failure::Error;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 use toml::{self, Value};
 
-use crate::errors::*;
-
-/// The overall configuration object for MDBook, essentially an in-memory
+/// The overall configuration object for MDBookshelf, essentially an in-memory
 /// representation of `bookshelf.toml`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Config {
@@ -26,17 +25,14 @@ pub struct Config {
 
 impl Config {
     /// Load a `Config` from some string.
-    pub fn from_str(src: &str) -> Result<Config> {
-        toml::from_str(src).chain_err(|| Error::from("Invalid configuration file"))
+    pub fn from_str(src: &str) -> Result<Config, Error> {
+        toml::from_str(src).map_err(|e| format_err!("{}", e))
     }
 
     /// Load the configuration file from disk.
-    pub fn from_disk<P: AsRef<Path>>(config_file: P) -> Result<Config> {
+    pub fn from_disk<P: AsRef<Path>>(config_file: P) -> Result<Config, Error> {
         let mut buffer = String::new();
-        File::open(config_file)
-            .chain_err(|| "Unable to open the configuration file")?
-            .read_to_string(&mut buffer)
-            .chain_err(|| "Couldn't read the file")?;
+        File::open(config_file)?.read_to_string(&mut buffer)?;
 
         Config::from_str(&buffer)
     }
@@ -52,7 +48,7 @@ impl Default for Config {
     }
 }
 impl<'de> Deserialize<'de> for Config {
-    fn deserialize<D: Deserializer<'de>>(de: D) -> ::std::result::Result<Self, D::Error> {
+    fn deserialize<D: Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
         let raw = Value::deserialize(de)?;
 
         let mut table = match raw {
