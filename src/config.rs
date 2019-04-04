@@ -8,7 +8,7 @@ use failure::Error;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fs::File;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use toml::{self, Value};
 
 /// The overall configuration object for MDBookshelf, essentially an in-memory

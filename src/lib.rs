@@ -22,9 +22,11 @@ use std::path::{Path, PathBuf};
 
 #[derive(Serialize)]
 pub struct ManifestEntry {
+    pub last_modified: String,
     pub name: String,
     pub path: PathBuf,
-    pub url: String
+    pub repo_url: String,
+    pub url: String,
 }
 
 #[derive(Default, Serialize)]
@@ -48,10 +50,19 @@ pub fn run(config: Config) -> Result<Manifest, Error> {
     for repo_config in config.book_repo_configs {
         let repo_url = &repo_config.repo_url;
         let folder = repo_url.split('/').last().unwrap();
-        let (_repo, repo_path) = clone_or_fetch_repo(repo_url, &config.working_dir)?;
+        let (_repo, mut repo_path) = clone_or_fetch_repo(repo_url, &config.working_dir)?;
 
-        let md = MDBook::load(repo_path)
-            .map_err(|e| format_err!("Could not load mdbook at path: {}", e))?;
+        if let Some(repo_folder) = repo_config.folder {
+            repo_path = repo_path.join(repo_folder);
+        }
+
+        let md = MDBook::load(&repo_path).map_err(|e| {
+            format_err!(
+                "Could not load mdbook at path {}: {}",
+                repo_path.display(),
+                e
+            )
+        })?;
         let dest = Path::new(&config.destination_dir).join(folder);
 
         let ctx = RenderContext::new(
@@ -61,14 +72,20 @@ pub fn run(config: Config) -> Result<Manifest, Error> {
             dest.to_path_buf(),
         );
 
-        mdbook_epub::generate(&ctx)?;
+        mdbook_epub::generate(&ctx).unwrap_or_else(|e| {
+            error!("{}", e);
+        });
 
         let output_file = mdbook_epub::output_filename(&dest, &ctx.config);
         info!("Generated epub into {}", output_file.display());
 
+        // :TODO: read last modified from git log
+
         let entry = ManifestEntry {
+            last_modified: Utc::now().to_rfc2822(),
             name: repo_config.title,
             path: output_file,
+            repo_url: repo_config.repo_url,
             url: repo_config.url,
         };
 
