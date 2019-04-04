@@ -9,7 +9,8 @@ fn generate_epub_library() {
 
     let book_repo_configs = vec![BookRepoConfig {
         title: "The book".to_string(),
-        url: "https://github.com/rust-lang/book.git".to_string(),
+        repo_url: "https://github.com/rust-lang/book.git".to_string(),
+        ..Default::default()
     }];
 
     let config = Config {
@@ -34,7 +35,8 @@ fn generate_epub_library() {
 
     let book_repo_configs = vec![BookRepoConfig {
         title: "The book".to_string(),
-        url: "https://github.com/rust-lang/book.git".to_string(),
+        repo_url: "https://github.com/rust-lang/book.git".to_string(),
+        ..Default::default()
     }];
 
     let destination_dir = "epubs".to_string();

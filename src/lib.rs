@@ -24,6 +24,7 @@ use std::path::{Path, PathBuf};
 pub struct ManifestEntry {
     pub name: String,
     pub path: PathBuf,
+    pub url: String
 }
 
 #[derive(Default, Serialize)]
@@ -45,7 +46,7 @@ pub fn run(config: Config) -> Result<Manifest, Error> {
     manifest.entries.reserve(config.book_repo_configs.len());
 
     for repo_config in config.book_repo_configs {
-        let repo_url = &repo_config.url;
+        let repo_url = &repo_config.repo_url;
         let folder = repo_url.split('/').last().unwrap();
         let (_repo, repo_path) = clone_or_fetch_repo(repo_url, &config.working_dir)?;
 
@@ -68,6 +69,7 @@ pub fn run(config: Config) -> Result<Manifest, Error> {
         let entry = ManifestEntry {
             name: repo_config.title,
             path: output_file,
+            url: repo_config.url,
         };
 
         manifest.entries.push(entry);

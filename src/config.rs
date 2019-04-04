@@ -81,10 +81,11 @@ pub struct BookRepoConfig {
     /// The book's title.
     // :TODO: get it from book itself?
     pub title: String,
-    /// The books root directories.
-    // :TODO:
-    // pub src_dirs: Option<Vec<PathBuf>>,
+    /// The book root directory.
+    pub folder: Option<PathBuf>,
     /// The git repository url.
+    pub repo_url: String,
+    /// The online rendered book url.
     pub url: String,
 }
 
@@ -92,6 +93,8 @@ impl Default for BookRepoConfig {
     fn default() -> BookRepoConfig {
         BookRepoConfig {
             title: String::default(),
+            folder: None,
+            repo_url: String::default(),
             url: String::default(),
         }
     }
@@ -104,10 +107,13 @@ mod tests {
     const COMPLEX_CONFIG: &'static str = r#"
         [[book]]
         title = "Some Book"
+        repo-url = "git_source"
         url = "source"
+        folder = "./foo"
 
         [[book]]
         title = "Some Book2"
+        repo-url = "git_source2"
         url = "source2"
         "#;
 
@@ -118,11 +124,14 @@ mod tests {
         let book_repo_configs = vec![
             BookRepoConfig {
                 title: String::from("Some Book"),
+                folder: Some(PathBuf::from("./foo")),
+                repo_url: String::from("git_source"),
                 url: String::from("source"),
                 ..Default::default()
             },
             BookRepoConfig {
                 title: String::from("Some Book2"),
+                repo_url: String::from("git_source2"),
                 url: String::from("source2"),
                 ..Default::default()
             },
