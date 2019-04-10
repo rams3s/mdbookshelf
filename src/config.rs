@@ -9,6 +9,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use toml::{self, Value};
 
 /// The overall configuration object for MDBookshelf, essentially an in-memory
@@ -24,17 +25,21 @@ pub struct Config {
 }
 
 impl Config {
-    /// Load a `Config` from some string.
-    pub fn from_str(src: &str) -> Result<Config, Error> {
-        toml::from_str(src).map_err(|e| format_err!("{}", e))
-    }
-
     /// Load the configuration file from disk.
     pub fn from_disk<P: AsRef<Path>>(config_file: P) -> Result<Config, Error> {
         let mut buffer = String::new();
         File::open(config_file)?.read_to_string(&mut buffer)?;
 
         Config::from_str(&buffer)
+    }
+}
+
+impl FromStr for Config {
+    type Err = Error;
+
+    /// Load a `Config` from some string.
+    fn from_str(src: &str) -> Result<Self, Self::Err> {
+        toml::from_str(src).map_err(|e| format_err!("{}", e))
     }
 }
 
