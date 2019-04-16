@@ -16,6 +16,7 @@ fn generate_epub_library() {
     let config = Config {
         destination_dir,
         working_dir,
+        title: "My bookshelf".to_string(),
         book_repo_configs,
     };
 
@@ -45,6 +46,7 @@ fn generate_epub_library() {
     let config = Config {
         destination_dir,
         working_dir,
+        title: "My bookshelf".to_string(),
         book_repo_configs,
     };
 

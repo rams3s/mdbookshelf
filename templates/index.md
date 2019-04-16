@@ -1,7 +1,8 @@
-# The ebooks
+# {{title}}
 
 Last updated: {{timestamp}}
 
 {% for entry in entries %}
-  {{loop.index}}. [{{entry.name}}]({{entry.path}}) - [Official]({{entry.url}}) - [Repository]({{entry.repo_url}}) - Last commit date: {{entry.last_modified}} - Commit: {{entry.commit_sha}}
+  {{loop.index}}. {{entry.title}} - [EPUB](file://./{{entry.path}}) | [Website]({{entry.url}}) | [Repository]({{entry.repo_url}})  
+  Commit: {{entry.commit_sha}} ({{entry.last_modified}})
 {% endfor %}

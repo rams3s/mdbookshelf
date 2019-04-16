@@ -49,19 +49,25 @@ impl Default for ManifestEntry {
 pub struct Manifest {
     pub entries: Vec<ManifestEntry>,
     pub timestamp: String,
+    pub title: String,
 }
 
 impl Manifest {
     pub fn new() -> Manifest {
         let entries = Vec::new();
         let timestamp = Utc::now().to_rfc2822();
-        Manifest { entries, timestamp }
+        Manifest {
+            entries,
+            timestamp,
+            title: String::default(),
+        }
     }
 }
 
 pub fn run(config: Config) -> Result<Manifest, Error> {
     let mut manifest = Manifest::new();
     manifest.entries.reserve(config.book_repo_configs.len());
+    manifest.title = config.title;
 
     for repo_config in config.book_repo_configs {
         let mut manifest_entry = ManifestEntry::default();

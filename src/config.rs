@@ -18,6 +18,8 @@ use toml::{self, Value};
 pub struct Config {
     /// Destination directory.
     pub destination_dir: String,
+    /// Title of the book collection.
+    pub title: String,
     /// Working directory.
     pub working_dir: String,
     /// An array of BookRepoConfig
@@ -47,6 +49,7 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             destination_dir: String::default(),
+            title: String::default(),
             working_dir: String::default(),
             book_repo_configs: Vec::new(),
         }
@@ -70,9 +73,14 @@ impl<'de> Deserialize<'de> for Config {
             .remove("book")
             .and_then(|value| value.try_into().ok())
             .unwrap_or_default();
+        let title: String = table
+            .remove("title")
+            .and_then(|value| value.try_into().ok())
+            .unwrap_or_default();
 
         Ok(Config {
             book_repo_configs,
+            title,
             ..Default::default()
         })
     }
