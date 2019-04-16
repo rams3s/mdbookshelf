@@ -44,7 +44,7 @@ impl FromStr for Config {
 }
 
 impl Default for Config {
-    fn default() -> Config {
+    fn default() -> Self {
         Config {
             destination_dir: String::default(),
             working_dir: String::default(),

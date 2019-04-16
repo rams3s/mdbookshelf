@@ -1,0 +1,5 @@
+[book]
+title = "Hello Rust"
+authors = []
+multilingual = false
+src = "src"
