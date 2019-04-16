@@ -76,7 +76,10 @@ pub fn run(config: Config) -> Result<Manifest, Error> {
         }
 
         let dest = Path::new(&config.destination_dir).join(folder);
-        generate_epub(&mut manifest_entry, repo_path, dest)?;
+        if let Err(e) = generate_epub(&mut manifest_entry, repo_path, dest) {
+            error!("Epub generation failed {}", e);
+            continue;
+        }
 
         manifest_entry.title = repo_config.title;
         manifest_entry.repo_url = repo_config.repo_url;
