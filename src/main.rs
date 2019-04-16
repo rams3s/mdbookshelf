@@ -71,6 +71,7 @@ fn main() {
                 .expect("Error while writing manifest to file");
 
             // :TODO: parametrize templates path
+            // :TODO: generate summary.md
             let tera = compile_templates!("templates/**/*");
             let page = tera.render("index.md", &manifest).expect("Template error");
 

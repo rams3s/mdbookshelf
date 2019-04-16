@@ -152,6 +152,7 @@ fn clone_or_fetch_repo(
             repo
         }
         Err(_err) => {
+            // :TODO: shallow clone when supported by libgit2 (https://github.com/libgit2/libgit2/issues/3058)
             info!("Cloning {} to {:?}", url, dest);
             Repository::clone(url, &dest)?
         }
