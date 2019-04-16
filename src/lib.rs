@@ -11,7 +11,7 @@ extern crate serde_json;
 
 pub mod config;
 
-use chrono::Utc;
+use chrono::{TimeZone, Utc};
 use config::Config;
 use failure::Error;
 use git2::Repository;
@@ -145,13 +145,15 @@ fn clone_or_fetch_repo(
         }
     };
 
-    // :TODO: read last modified from git log
+    {
+        let head = repo.head()?;
+        let commit = head.peel_to_commit()?;
+        let commit_sha = commit.id();
+        let last_modified = Utc.timestamp(commit.time().seconds(), 0);
 
-    let commit_sha = "deadbeef123456".to_string();
-    let last_modified = Utc::now().to_rfc2822();
-
-    entry.commit_sha = commit_sha;
-    entry.last_modified = last_modified;
+        entry.commit_sha = commit_sha.to_string();
+        entry.last_modified = last_modified.to_rfc2822();
+    }
 
     Ok((repo, dest))
 }
