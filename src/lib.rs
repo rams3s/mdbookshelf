@@ -87,7 +87,10 @@ pub fn run(config: Config) -> Result<Manifest, Error> {
             continue;
         }
 
-        manifest_entry.title = repo_config.title;
+        if let Some(title) = repo_config.title {
+            manifest_entry.title = title;
+        }
+
         manifest_entry.repo_url = repo_config.repo_url;
         manifest_entry.url = repo_config.url;
 

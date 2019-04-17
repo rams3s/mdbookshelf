@@ -91,9 +91,9 @@ impl<'de> Deserialize<'de> for Config {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
 pub struct BookRepoConfig {
-    /// The book's title.
-    // :TODO: get it from book itself?
-    pub title: String,
+    /// The book's title
+    /// If set, overwrites the value read from the book itself when generating the manifest.
+    pub title: Option<String>,
     /// The book root directory.
     pub folder: Option<PathBuf>,
     /// The git repository url.
@@ -105,7 +105,7 @@ pub struct BookRepoConfig {
 impl Default for BookRepoConfig {
     fn default() -> BookRepoConfig {
         BookRepoConfig {
-            title: String::default(),
+            title: None,
             folder: None,
             repo_url: String::default(),
             url: String::default(),
