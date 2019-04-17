@@ -46,18 +46,34 @@ impl Default for ManifestEntry {
 }
 
 #[derive(Default, Serialize)]
-pub struct Manifest {
+pub struct ManifestCollection {
     pub entries: Vec<ManifestEntry>,
+    pub title: String,
+}
+
+impl ManifestCollection {
+    pub fn new() -> ManifestCollection {
+        let entries = Vec::new();
+        ManifestCollection {
+            entries,
+            title: String::default(),
+        }
+    }
+}
+
+#[derive(Default, Serialize)]
+pub struct Manifest {
+    pub collections: Vec<ManifestCollection>,
     pub timestamp: String,
     pub title: String,
 }
 
 impl Manifest {
     pub fn new() -> Manifest {
-        let entries = Vec::new();
-        let timestamp = Utc::now().to_rfc2822();
+        let collections = Vec::new();
+        let timestamp = Utc::now().to_rfc3339();
         Manifest {
-            entries,
+            collections,
             timestamp,
             title: String::default(),
         }
@@ -66,35 +82,44 @@ impl Manifest {
 
 pub fn run(config: Config) -> Result<Manifest, Error> {
     let mut manifest = Manifest::new();
-    manifest.entries.reserve(config.book_repo_configs.len());
-    manifest.title = config.title;
+    manifest.collections.reserve(config.collections.len());
 
-    for repo_config in config.book_repo_configs {
-        let mut manifest_entry = ManifestEntry::default();
+    for collection_config in config.collections {
+        let mut collection = ManifestCollection::new();
+        collection
+            .entries
+            .reserve(collection_config.book_repo_configs.len());
+        collection.title = collection_config.title;
 
-        let repo_url = &repo_config.repo_url;
-        let folder = repo_url.split('/').last().unwrap();
-        let (_repo, mut repo_path) =
-            clone_or_fetch_repo(&mut manifest_entry, repo_url, &config.working_dir)?;
+        for repo_config in collection_config.book_repo_configs {
+            let mut manifest_entry = ManifestEntry::default();
 
-        if let Some(repo_folder) = repo_config.folder {
-            repo_path = repo_path.join(repo_folder);
+            let repo_url = &repo_config.repo_url;
+            let folder = repo_url.split('/').last().unwrap();
+            let (_repo, mut repo_path) =
+                clone_or_fetch_repo(&mut manifest_entry, repo_url, config.working_dir.as_ref().unwrap())?;
+
+            if let Some(repo_folder) = repo_config.folder {
+                repo_path = repo_path.join(repo_folder);
+            }
+
+            let dest = Path::new(config.destination_dir.as_ref().unwrap()).join(folder);
+            if let Err(e) = generate_epub(&mut manifest_entry, repo_path, dest) {
+                error!("Epub generation failed {}", e);
+                continue;
+            }
+
+            if let Some(title) = repo_config.title {
+                manifest_entry.title = title;
+            }
+
+            manifest_entry.repo_url = repo_config.repo_url;
+            manifest_entry.url = repo_config.url;
+
+            collection.entries.push(manifest_entry);
         }
 
-        let dest = Path::new(&config.destination_dir).join(folder);
-        if let Err(e) = generate_epub(&mut manifest_entry, repo_path, dest) {
-            error!("Epub generation failed {}", e);
-            continue;
-        }
-
-        if let Some(title) = repo_config.title {
-            manifest_entry.title = title;
-        }
-
-        manifest_entry.repo_url = repo_config.repo_url;
-        manifest_entry.url = repo_config.url;
-
-        manifest.entries.push(manifest_entry);
+        manifest.collections.push(collection);
     }
 
     Ok(manifest)
@@ -165,7 +190,7 @@ fn clone_or_fetch_repo(
         let last_modified = Utc.timestamp(commit.time().seconds(), 0);
 
         entry.commit_sha = commit_sha.to_string();
-        entry.last_modified = last_modified.to_rfc2822();
+        entry.last_modified = last_modified.to_rfc3339();
     }
 
     Ok((repo, dest))

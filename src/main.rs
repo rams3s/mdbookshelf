@@ -38,10 +38,12 @@ fn main() {
         )
         .get_matches();
 
+    // :TODO: let destination dir be set from toml file
     let destination_dir = matches.value_of("DESTINATION").unwrap().to_string();
 
     info!("Running mdbookshelf with destination {}", destination_dir);
 
+    // :TODO: let working dir be set from toml file
     let working_dir = matches
         .value_of("working_dir")
         .unwrap_or("./repos")
@@ -60,8 +62,8 @@ fn main() {
         Config::default()
     };
 
-    config.destination_dir = destination_dir;
-    config.working_dir = working_dir;
+    config.destination_dir = Some( destination_dir);
+    config.working_dir = Some(working_dir);
 
     match mdbookshelf::run(config) {
         Ok(manifest) => {
