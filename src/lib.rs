@@ -55,7 +55,7 @@ pub struct Manifest {
 impl Manifest {
     pub fn new() -> Manifest {
         let entries = Vec::new();
-        let timestamp = Utc::now().to_rfc2822();
+        let timestamp = Utc::now().to_rfc3339();
         Manifest {
             entries,
             timestamp,
@@ -165,7 +165,7 @@ fn clone_or_fetch_repo(
         let last_modified = Utc.timestamp(commit.time().seconds(), 0);
 
         entry.commit_sha = commit_sha.to_string();
-        entry.last_modified = last_modified.to_rfc2822();
+        entry.last_modified = last_modified.to_rfc3339();
     }
 
     Ok((repo, dest))
