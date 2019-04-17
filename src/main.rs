@@ -11,7 +11,7 @@ use clap::{App, Arg};
 use env_logger::Env;
 use std::fs::File;
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process;
 use walkdir::WalkDir;
 
@@ -34,26 +34,16 @@ fn main() {
                 .takes_value(true),
         )
         .arg(
-            Arg::with_name("DESTINATION")
-                .help("Sets the input file to use")
-                .required(true),
+            Arg::with_name("destination_dir")
+                .short("d")
+                .long("destination_dir")
+                .value_name("DESTINATION_DIR")
+                .help("Sets the destination directory")
+                .takes_value(true),
         )
         .get_matches();
 
-    // :TODO: let destination dir be set from toml file
-    let destination_dir = matches.value_of("DESTINATION").unwrap().to_string();
-
-    info!("Running mdbookshelf with destination {}", destination_dir);
-
-    // :TODO: let working dir be set from toml file
-    let working_dir = matches
-        .value_of("working_dir")
-        .unwrap_or("./repos")
-        .to_string();
-
-    info!("Cloning repositories to {}", working_dir);
-
-    let manifest_path = Path::new(&destination_dir).join("manifest.json");
+    // :TODO: add argument to set config path
 
     let config_location = Path::new(".").join("bookshelf.toml");
     let mut config = if config_location.exists() {
@@ -63,14 +53,37 @@ fn main() {
         Config::default()
     };
 
-    config.destination_dir = destination_dir;
-    config.working_dir = working_dir;
+    if let Some(destination_dir) = matches.value_of("destination_dir") {
+        config.destination_dir = Some(PathBuf::from(destination_dir));
+    }
 
-    let destination_dir = config.destination_dir.clone();
+    assert!(
+        config.destination_dir.is_some(),
+        "Destination dir must be set in toml file or through command line"
+    );
 
-    match mdbookshelf::run(config) {
+    info!(
+        "Running mdbookshelf with destination {}",
+        config.destination_dir.as_ref().unwrap().display()
+    );
+
+    if let Some(working_dir) = matches.value_of("working_dir") {
+        config.working_dir = Some(PathBuf::from(working_dir));
+    }
+
+    config.working_dir = config.working_dir.or(Some(PathBuf::from("repos")));
+
+    info!(
+        "Cloning repositories to {}",
+        config.working_dir.as_ref().unwrap().display()
+    );
+
+    match mdbookshelf::run(&config) {
         Ok(manifest) => {
+            let destination_dir = config.destination_dir.as_ref().unwrap();
+            let manifest_path = Path::new(destination_dir).join("manifest.json");
             info!("Writing manifest to {}", manifest_path.display());
+
             let f = File::create(&manifest_path).expect("Could not create manifest file");
             serde_json::to_writer_pretty(f, &manifest)
                 .expect("Error while writing manifest to file");

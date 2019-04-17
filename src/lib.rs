@@ -64,35 +64,38 @@ impl Manifest {
     }
 }
 
-pub fn run(config: Config) -> Result<Manifest, Error> {
+pub fn run(config: &Config) -> Result<Manifest, Error> {
     let mut manifest = Manifest::new();
     manifest.entries.reserve(config.book_repo_configs.len());
-    manifest.title = config.title;
+    manifest.title = config.title.clone();
 
-    for repo_config in config.book_repo_configs {
+    for repo_config in &config.book_repo_configs {
         let mut manifest_entry = ManifestEntry::default();
 
         let repo_url = &repo_config.repo_url;
         let folder = repo_url.split('/').last().unwrap();
-        let (_repo, mut repo_path) =
-            clone_or_fetch_repo(&mut manifest_entry, repo_url, &config.working_dir)?;
+        let (_repo, mut repo_path) = clone_or_fetch_repo(
+            &mut manifest_entry,
+            repo_url,
+            config.working_dir.as_ref().unwrap().to_str().unwrap(),
+        )?;
 
-        if let Some(repo_folder) = repo_config.folder {
+        if let Some(repo_folder) = &repo_config.folder {
             repo_path = repo_path.join(repo_folder);
         }
 
-        let dest = Path::new(&config.destination_dir).join(folder);
+        let dest = config.destination_dir.as_ref().unwrap().join(folder);
         if let Err(e) = generate_epub(&mut manifest_entry, repo_path, dest) {
             error!("Epub generation failed {}", e);
             continue;
         }
 
-        if let Some(title) = repo_config.title {
-            manifest_entry.title = title;
+        if let Some(title) = &repo_config.title {
+            manifest_entry.title = title.clone();
         }
 
-        manifest_entry.repo_url = repo_config.repo_url;
-        manifest_entry.url = repo_config.url;
+        manifest_entry.repo_url = repo_config.repo_url.clone();
+        manifest_entry.url = repo_config.url.clone();
 
         manifest.entries.push(manifest_entry);
     }

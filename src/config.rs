@@ -12,22 +12,20 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use toml::{self, Value};
 
-// :TODO: use Option<PathBuf> for destination_dir, working)dir and templates_dir
-
 /// The overall configuration object for MDBookshelf, essentially an in-memory
 /// representation of `bookshelf.toml`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Config {
+    /// An array of BookRepoConfig
+    pub book_repo_configs: Vec<BookRepoConfig>,
     /// Destination directory.
-    pub destination_dir: String,
+    pub destination_dir: Option<PathBuf>,
+    /// Templates directory.
+    pub templates_dir: Option<PathBuf>,
     /// Title of the book collection.
     pub title: String,
     /// Working directory.
-    pub working_dir: String,
-    /// An array of BookRepoConfig
-    pub book_repo_configs: Vec<BookRepoConfig>,
-    /// Templates directory.
-    pub templates_dir: String,
+    pub working_dir: Option<PathBuf>,
 }
 
 impl Config {
@@ -52,11 +50,11 @@ impl FromStr for Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            destination_dir: String::default(),
-            title: String::default(),
-            working_dir: String::default(),
             book_repo_configs: Vec::new(),
-            templates_dir: String::default(),
+            destination_dir: None,
+            templates_dir: None,
+            title: String::default(),
+            working_dir: None,
         }
     }
 }
@@ -78,7 +76,11 @@ impl<'de> Deserialize<'de> for Config {
             .remove("book")
             .and_then(|value| value.try_into().ok())
             .unwrap_or_default();
-        let templates_dir: String = table
+        let destination_dir: Option<PathBuf> = table
+            .remove("destination-dir")
+            .and_then(|value| value.try_into().ok())
+            .unwrap_or_default();
+        let templates_dir: Option<PathBuf> = table
             .remove("templates-dir")
             .and_then(|value| value.try_into().ok())
             .unwrap_or_default();
@@ -86,12 +88,17 @@ impl<'de> Deserialize<'de> for Config {
             .remove("title")
             .and_then(|value| value.try_into().ok())
             .unwrap_or_default();
+        let working_dir: Option<PathBuf> = table
+            .remove("working-dir")
+            .and_then(|value| value.try_into().ok())
+            .unwrap_or_default();
 
         Ok(Config {
             book_repo_configs,
-            title,
+            destination_dir,
             templates_dir,
-            ..Default::default()
+            title,
+            working_dir,
         })
     }
 }
@@ -164,7 +171,7 @@ mod tests {
         let got = Config::from_str(src).unwrap();
 
         assert_eq!(got.title, "My bookshelf");
-        assert_eq!(got.templates_dir, "templates/");
+        assert_eq!(got.templates_dir.unwrap().to_str().unwrap(), "templates/");
         assert_eq!(got.book_repo_configs, book_repo_configs);
     }
 }
