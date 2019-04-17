@@ -5,6 +5,7 @@ extern crate env_logger;
 extern crate log;
 #[macro_use]
 extern crate tera;
+extern crate walkdir;
 
 use clap::{App, Arg};
 use env_logger::Env;
@@ -12,6 +13,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 use std::process;
+use walkdir::WalkDir;
 
 use mdbookshelf;
 use mdbookshelf::config::Config;
@@ -38,10 +40,12 @@ fn main() {
         )
         .get_matches();
 
+    // :TODO: let destination dir be set from toml file
     let destination_dir = matches.value_of("DESTINATION").unwrap().to_string();
 
     info!("Running mdbookshelf with destination {}", destination_dir);
 
+    // :TODO: let working dir be set from toml file
     let working_dir = matches
         .value_of("working_dir")
         .unwrap_or("./repos")
@@ -50,7 +54,6 @@ fn main() {
     info!("Cloning repositories to {}", working_dir);
 
     let manifest_path = Path::new(&destination_dir).join("manifest.json");
-    let index_path = Path::new(&destination_dir).join("index.md");
 
     let config_location = Path::new(".").join("bookshelf.toml");
     let mut config = if config_location.exists() {
@@ -63,6 +66,8 @@ fn main() {
     config.destination_dir = destination_dir;
     config.working_dir = working_dir;
 
+    let destination_dir = config.destination_dir.clone();
+
     match mdbookshelf::run(config) {
         Ok(manifest) => {
             info!("Writing manifest to {}", manifest_path.display());
@@ -71,14 +76,32 @@ fn main() {
                 .expect("Error while writing manifest to file");
 
             // :TODO: parametrize templates path
-            // :TODO: generate summary.md
             let tera = compile_templates!("templates/**/*");
-            let page = tera.render("index.md", &manifest).expect("Template error");
 
-            let mut f = File::create(&index_path).expect("Could not create index file");
+            for entry in WalkDir::new("templates")
+                .follow_links(true)
+                .into_iter()
+                .filter_map(|v| v.ok())
+                .filter(|e| !e.file_type().is_dir())
+            {
+                let template_path = entry.path().strip_prefix("templates").unwrap();
+                let template_path = template_path.to_str().unwrap();
+                let output_path = Path::new(&destination_dir).join(template_path);
 
-            f.write_all(page.as_bytes())
-                .expect("Error while writing index file");
+                info!(
+                    "Rendering template {} to {}",
+                    template_path,
+                    output_path.display()
+                );
+
+                let page = tera
+                    .render(template_path, &manifest)
+                    .expect("Template error");
+                let mut f = File::create(&output_path).expect("Could not create file");
+
+                f.write_all(page.as_bytes())
+                    .expect("Error while writing file");
+            }
         }
         Err(e) => {
             error!("Application error: {}", e);

@@ -12,6 +12,8 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use toml::{self, Value};
 
+// :TODO: use Option<PathBuf> for destination_dir, working)dir and templates_dir
+
 /// The overall configuration object for MDBookshelf, essentially an in-memory
 /// representation of `bookshelf.toml`.
 #[derive(Debug, Clone, PartialEq)]
@@ -24,6 +26,8 @@ pub struct Config {
     pub working_dir: String,
     /// An array of BookRepoConfig
     pub book_repo_configs: Vec<BookRepoConfig>,
+    /// Templates directory.
+    pub templates_dir: String,
 }
 
 impl Config {
@@ -52,6 +56,7 @@ impl Default for Config {
             title: String::default(),
             working_dir: String::default(),
             book_repo_configs: Vec::new(),
+            templates_dir: String::default(),
         }
     }
 }
@@ -73,6 +78,10 @@ impl<'de> Deserialize<'de> for Config {
             .remove("book")
             .and_then(|value| value.try_into().ok())
             .unwrap_or_default();
+        let templates_dir: String = table
+            .remove("templates-dir")
+            .and_then(|value| value.try_into().ok())
+            .unwrap_or_default();
         let title: String = table
             .remove("title")
             .and_then(|value| value.try_into().ok())
@@ -81,6 +90,7 @@ impl<'de> Deserialize<'de> for Config {
         Ok(Config {
             book_repo_configs,
             title,
+            templates_dir,
             ..Default::default()
         })
     }
@@ -103,7 +113,7 @@ pub struct BookRepoConfig {
 }
 
 impl Default for BookRepoConfig {
-    fn default() -> BookRepoConfig {
+    fn default() -> Self {
         BookRepoConfig {
             title: None,
             folder: None,
@@ -118,6 +128,9 @@ mod tests {
     use super::*;
 
     const COMPLEX_CONFIG: &'static str = r#"
+        title = "My bookshelf"
+        templates-dir = "templates/"
+
         [[book]]
         title = "Some Book"
         repo-url = "git_source"
@@ -125,25 +138,23 @@ mod tests {
         folder = "./foo"
 
         [[book]]
-        title = "Some Book2"
         repo-url = "git_source2"
         url = "source2"
         "#;
 
     #[test]
-    fn load_a_complex_config_file() {
+    fn load_config_file() {
         let src = COMPLEX_CONFIG;
 
         let book_repo_configs = vec![
             BookRepoConfig {
-                title: String::from("Some Book"),
+                title: Some(String::from("Some Book")),
                 folder: Some(PathBuf::from("./foo")),
                 repo_url: String::from("git_source"),
                 url: String::from("source"),
                 ..Default::default()
             },
             BookRepoConfig {
-                title: String::from("Some Book2"),
                 repo_url: String::from("git_source2"),
                 url: String::from("source2"),
                 ..Default::default()
@@ -152,6 +163,8 @@ mod tests {
 
         let got = Config::from_str(src).unwrap();
 
+        assert_eq!(got.title, "My bookshelf");
+        assert_eq!(got.templates_dir, "templates/");
         assert_eq!(got.book_repo_configs, book_repo_configs);
     }
 }
