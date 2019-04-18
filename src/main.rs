@@ -73,7 +73,7 @@ fn main() {
         config.working_dir = Some(PathBuf::from(working_dir));
     }
 
-    config.working_dir = config.working_dir.or(Some(PathBuf::from("repos")));
+    config.working_dir = config.working_dir.or_else(|| Some(PathBuf::from("repos")));
 
     info!(
         "Cloning repositories to {}",
