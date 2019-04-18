@@ -20,7 +20,7 @@ pub struct Config {
     pub book_repo_configs: Vec<BookRepoConfig>,
     /// Destination directory.
     pub destination_dir: Option<PathBuf>,
-    /// Templates directory.
+    /// Templates directory (if not set, will generate manifest.json).
     pub templates_dir: Option<PathBuf>,
     /// Title of the book collection.
     pub title: String,

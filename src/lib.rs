@@ -8,6 +8,9 @@ extern crate mdbook;
 extern crate mdbook_epub;
 extern crate serde;
 extern crate serde_json;
+#[macro_use]
+extern crate tera;
+extern crate walkdir;
 
 pub mod config;
 
@@ -18,7 +21,10 @@ use git2::Repository;
 use mdbook::renderer::RenderContext;
 use mdbook::MDBook;
 use serde::Serialize;
+use std::fs::File;
+use std::io::Write;
 use std::path::{Path, PathBuf};
+use walkdir::WalkDir;
 
 #[derive(Serialize)]
 pub struct ManifestEntry {
@@ -98,6 +104,48 @@ pub fn run(config: &Config) -> Result<Manifest, Error> {
         manifest_entry.url = repo_config.url.clone();
 
         manifest.entries.push(manifest_entry);
+    }
+
+    let destination_dir = config.destination_dir.as_ref().unwrap();
+
+    match config.templates_dir.as_ref() {
+        Some(templates_dir) => {
+            let templates_pattern = templates_dir.join("**/*");
+            let tera = compile_templates!(templates_pattern.to_str().unwrap());
+
+            for entry in WalkDir::new(templates_dir)
+                .follow_links(true)
+                .into_iter()
+                .filter_map(|v| v.ok())
+                .filter(|e| !e.file_type().is_dir())
+            {
+                let template_path = entry.path().strip_prefix(templates_dir).unwrap();
+                let template_path = template_path.to_str().unwrap();
+                let output_path = Path::new(&destination_dir).join(template_path);
+
+                info!(
+                    "Rendering template {} to {}",
+                    template_path,
+                    output_path.display()
+                );
+
+                let page = tera
+                    .render(template_path, &manifest)
+                    .expect("Template error");
+                let mut f = File::create(&output_path).expect("Could not create file");
+
+                f.write_all(page.as_bytes())
+                    .expect("Error while writing file");
+            }
+        }
+        None => {
+            let manifest_path = Path::new(destination_dir).join("manifest.json");
+            info!("Writing manifest to {}", manifest_path.display());
+
+            let f = File::create(&manifest_path).expect("Could not create manifest file");
+            serde_json::to_writer_pretty(f, &manifest)
+                .expect("Error while writing manifest to file");
+        }
     }
 
     Ok(manifest)
