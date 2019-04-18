@@ -41,9 +41,17 @@ fn main() {
                 .help("Sets the destination directory")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("templates_dir")
+                .short("t")
+                .long("templates_dir")
+                .value_name("TEMPLATES_DIR")
+                .help("Sets the templates directory")
+                .takes_value(true),
+        )
         .get_matches();
 
-    // :TODO: add argument to set config path
+    // :TODO: add argument to set config path (bookshelf.toml)
 
     let config_location = Path::new(".").join("bookshelf.toml");
     let mut config = if config_location.exists() {
@@ -78,6 +86,15 @@ fn main() {
         config.working_dir.as_ref().unwrap().display()
     );
 
+    if let Some(templates_dir) = matches.value_of("templates_dir") {
+        config.templates_dir = Some(PathBuf::from(templates_dir));
+    }
+
+    match config.templates_dir.as_ref() {
+        Some(templates_dir) => info!("Using templates in {}", templates_dir.display()),
+        None => info!("No templates dir provided"),
+    }
+
     match mdbookshelf::run(&config) {
         Ok(manifest) => {
             let destination_dir = config.destination_dir.as_ref().unwrap();
@@ -88,32 +105,36 @@ fn main() {
             serde_json::to_writer_pretty(f, &manifest)
                 .expect("Error while writing manifest to file");
 
-            // :TODO: parametrize templates path
-            let tera = compile_templates!("templates/**/*");
+            // :TODO: move template / tera code to lib
 
-            for entry in WalkDir::new("templates")
-                .follow_links(true)
-                .into_iter()
-                .filter_map(|v| v.ok())
-                .filter(|e| !e.file_type().is_dir())
-            {
-                let template_path = entry.path().strip_prefix("templates").unwrap();
-                let template_path = template_path.to_str().unwrap();
-                let output_path = Path::new(&destination_dir).join(template_path);
+            if let Some(templates_dir) = config.templates_dir.as_ref() {
+                let templates_pattern = templates_dir.join("**/*");
+                let tera = compile_templates!(templates_pattern.to_str().unwrap());
 
-                info!(
-                    "Rendering template {} to {}",
-                    template_path,
-                    output_path.display()
-                );
+                for entry in WalkDir::new(templates_dir)
+                    .follow_links(true)
+                    .into_iter()
+                    .filter_map(|v| v.ok())
+                    .filter(|e| !e.file_type().is_dir())
+                {
+                    let template_path = entry.path().strip_prefix(templates_dir).unwrap();
+                    let template_path = template_path.to_str().unwrap();
+                    let output_path = Path::new(&destination_dir).join(template_path);
 
-                let page = tera
-                    .render(template_path, &manifest)
-                    .expect("Template error");
-                let mut f = File::create(&output_path).expect("Could not create file");
+                    info!(
+                        "Rendering template {} to {}",
+                        template_path,
+                        output_path.display()
+                    );
 
-                f.write_all(page.as_bytes())
-                    .expect("Error while writing file");
+                    let page = tera
+                        .render(template_path, &manifest)
+                        .expect("Template error");
+                    let mut f = File::create(&output_path).expect("Could not create file");
+
+                    f.write_all(page.as_bytes())
+                        .expect("Error while writing file");
+                }
             }
         }
         Err(e) => {
