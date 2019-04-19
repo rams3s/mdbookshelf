@@ -1,4 +1,5 @@
 /target
 **/*.rs.bk
-/epubs
-/repos
+tests/book
+tests/out
+tests/repos
