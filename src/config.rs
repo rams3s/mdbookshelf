@@ -103,12 +103,11 @@ impl<'de> Deserialize<'de> for Config {
     }
 }
 
-/// Configuration options which are specific to the book and required for
-/// loading it from disk.
+/// The configuration for a single book
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "kebab-case")]
 pub struct BookRepoConfig {
-    /// The book's title
+    /// The book's title.  
     /// If set, overwrites the value read from the book itself when generating the manifest.
     pub title: Option<String>,
     /// The book root directory.

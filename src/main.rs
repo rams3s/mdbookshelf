@@ -12,6 +12,10 @@ use std::process;
 use mdbookshelf;
 use mdbookshelf::config::Config;
 
+/// `mdbookshelf` binary reads config from `bookshelf.toml` file and allows
+/// overwriting some of the value using command line arguments.
+///
+/// Run `mdbookshelf --help` for documentation.
 fn main() {
     env_logger::from_env(Env::default().default_filter_or("info")).init();
 

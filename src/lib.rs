@@ -28,14 +28,22 @@ use std::path::{Path, PathBuf};
 use url::Url;
 use walkdir::WalkDir;
 
+/// A manifest entry for the generated EPUB
 #[derive(Serialize)]
 pub struct ManifestEntry {
+    /// The commit sha
     pub commit_sha: String,
+    /// The size of the EPUB in bytes
     pub epub_size: u64,
+    /// The last modified date of the book (i.e. the datetime of the last commit)
     pub last_modified: String,
+    /// The path to the generated EPUB
     pub path: PathBuf,
+    /// The book repository URL
     pub repo_url: String,
+    /// The book title
     pub title: String,
+    /// The book online version URL
     pub url: String,
 }
 
@@ -53,6 +61,8 @@ impl Default for ManifestEntry {
     }
 }
 
+/// A Manifest contains the information about all EPUBs built
+/// during one invocation of `mdbookshelf.run()`.
 #[derive(Default, Serialize)]
 pub struct Manifest {
     pub entries: Vec<ManifestEntry>,
@@ -72,6 +82,8 @@ impl Manifest {
     }
 }
 
+/// Generates all EPUBs defined in `config` and returns a `Manifest` containing
+/// information about all generated books.
 pub fn run(config: &Config) -> Result<Manifest, Error> {
     let mut manifest = Manifest::new();
     manifest.entries.reserve(config.book_repo_configs.len());
@@ -153,6 +165,7 @@ pub fn run(config: &Config) -> Result<Manifest, Error> {
     Ok(manifest)
 }
 
+/// Generate an EPUB from `path` to `dest`. Also modify manifest `entry` accordingly.
 fn generate_epub(entry: &mut ManifestEntry, path: PathBuf, dest: PathBuf) -> Result<(), Error> {
     let md = MDBook::load(path).map_err(|e| format_err!("Could not load mdbook: {}", e))?;
 
@@ -182,6 +195,7 @@ fn generate_epub(entry: &mut ManifestEntry, path: PathBuf, dest: PathBuf) -> Res
     Ok(())
 }
 
+/// Clones or fetches the repo at `url` inside `working_dir`.
 fn clone_or_fetch_repo(
     entry: &mut ManifestEntry,
     url: &str,
