@@ -10,6 +10,7 @@ extern crate serde;
 extern crate serde_json;
 #[macro_use]
 extern crate tera;
+extern crate url;
 extern crate walkdir;
 
 pub mod config;
@@ -24,6 +25,7 @@ use serde::Serialize;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use url::Url;
 use walkdir::WalkDir;
 
 #[derive(Serialize)]
@@ -185,7 +187,12 @@ fn clone_or_fetch_repo(
     url: &str,
     working_dir: &str,
 ) -> Result<(Repository, PathBuf), Error> {
-    let folder = url.split('/').last().unwrap();
+    let parsed_url = Url::parse(url)?;
+    let folder = parsed_url.path();
+    // skip initial `/` in path
+    let mut it = folder.chars();
+    it.next();
+    let folder = it.as_str();
     let mut dest = Path::new(working_dir).join(folder);
 
     // :TRICKY: can't use \ as path separator here because of improper native path handling in some parts of libgit2
