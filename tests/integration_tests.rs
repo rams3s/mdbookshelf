@@ -24,7 +24,6 @@ fn generate_epub_library() {
         .destination_dir
         .as_ref()
         .unwrap()
-        .join("mdbook-dummy.git")
         .join("Hello Rust.epub");
 
     assert!(!output_file.exists());
