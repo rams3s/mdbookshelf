@@ -1,11 +1,11 @@
- # MDBook Bookshelf
+ # MDBookshelf
 
 [![Build Status](https://travis-ci.org/rams3s/mdbookshelf.svg?branch=master)](https://travis-ci.org/rams3s/mdbookshelf)
 
 A Rust library/application to render a collection of books to EPUB using [mdbook-epub](https://github.com/Michael-F-Bryan/mdbook-epub).
 It uses [Tera](https://github.com/Keats/tera) template engine to render an optional template.
 
-Used to generate the [Rust eBookshelf](https://rust-ebookshelf.github.io) nightly.
+Used to generate the [Rust eBookshelf](https://rams3s.github.io/rust-ebookshelf) nightly.
 
 ## Configuration
 
@@ -49,13 +49,6 @@ OPTIONS:
 
 The options can be used to override values specified in `bookshelf.toml`.
 
-## TODO
-
-- [ ] Add Travis
-- [ ] Add documentation
-- [ ] Publish on crates.io
-- [ ] Generate MOBI files
-
 ## Contributions
 
 - Cleanup some code - this is my very first Rust code. I wrote this while still reading [the Book](https://doc.rust-lang.org/book/) (to be able to finish it on my Kindle). If you know of things that are not idiomatic or could be done better, please do not hesitate ;)
@@ -64,6 +57,7 @@ The options can be used to override values specified in `bookshelf.toml`.
 
 # Recent Changes
 
+- 0.1.1 Updated README
 - 0.1.0 First release
 
 # License
