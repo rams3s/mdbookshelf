@@ -2,6 +2,12 @@
 name = "mdbookshelf"
 version = "0.1.0"
 authors = ["Ramses Ladlani <rladlani@gmail.com>"]
+description = "Create epubs from a list of mdbook repositories"
+documentation = "https://docs.rs/mdbookshelf/"
+repository = "https://github.com/rams3s/mdbookshelf"
+keywords = ["epub", "ebook", "mdbook", "rustbook"]
+license = "MIT"
+readme = "README.md"
 edition = "2018"
 
 [dependencies]
