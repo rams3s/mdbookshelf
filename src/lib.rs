@@ -196,6 +196,14 @@ fn clone_or_fetch_repo(
 
     let repo = match Repository::open(&dest) {
         Ok(repo) => {
+            {
+                let remote = repo.find_remote("origin")?;
+                assert_eq!(
+                    remote.url().unwrap(),
+                    url,
+                    "Remote url for origin and requested url do not match"
+                );
+            }
             info!("Found {:?}. Fetching {}", dest, url);
             repo.find_remote("origin")?
                 .fetch(&["master"], None, None)
