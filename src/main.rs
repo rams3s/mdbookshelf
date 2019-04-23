@@ -18,6 +18,7 @@ use mdbookshelf::config::Config;
 /// Run `mdbookshelf --help` for documentation.
 fn main() {
     env_logger::from_env(Env::default().default_filter_or("info")).init();
+    color_backtrace::install();
 
     let matches = App::new("mdbookshelf")
         .about("Executes mdbook-epub on a collection of repositories")
@@ -94,7 +95,8 @@ fn main() {
     }
 
     if let Err(e) = mdbookshelf::run(&config) {
-        error!("Application error: {}", e);
+        error!("Application error {:?}", e.backtrace());
+        e.iter_chain().for_each(|c| error!("  caused by: {}", c));
         process::exit(1);
     }
 }
