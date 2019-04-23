@@ -105,10 +105,7 @@ pub fn run(config: &Config) -> Result<Manifest, Error> {
             repo_path = repo_path.join(repo_folder);
         }
 
-        if let Err(e) = generate_epub(&mut manifest_entry, repo_path.as_path(), dest) {
-            error!("Epub generation failed {}", e);
-            continue;
-        }
+        generate_epub(&mut manifest_entry, repo_path.as_path(), dest)?;
 
         if let Some(title) = &repo_config.title {
             manifest_entry.title = title.clone();
