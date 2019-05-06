@@ -169,9 +169,9 @@ pub fn run(config: &Config) -> Result<Manifest, Error> {
 fn generate_epub(entry: &mut ManifestEntry, path: &Path, dest: &Path) -> Result<(), Error> {
     let md = MDBook::load(path).map_err(|e| format_err!("Could not load mdbook: {}", e))?;
 
-    let ctx = RenderContext::new(md.root.clone(), md.book.clone(), md.config.clone(), dest);
+    let mut ctx = RenderContext::new(md.root.clone(), md.book.clone(), md.config.clone(), dest);
 
-    mdbook_epub::generate(&ctx).unwrap_or_else(|e| {
+    mdbook_epub::generate(&mut ctx).unwrap_or_else(|e| {
         error!("{}", e);
     });
 
