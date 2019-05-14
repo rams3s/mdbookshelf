@@ -21,6 +21,7 @@ use failure::Error;
 use git2::Repository;
 use mdbook::renderer::RenderContext;
 use mdbook::MDBook;
+use mdbook_epub::Config as EpubConfig;
 use serde::Serialize;
 use std::fs::File;
 use std::io::Write;
@@ -91,8 +92,18 @@ pub fn run(config: &Config) -> Result<Manifest, Error> {
 
     let dest = config.destination_dir.as_ref().unwrap();
 
+    let epub_config = EpubConfig {
+        additional_css: config.additional_css.clone(),
+        ..Default::default()
+    };
+
     for repo_config in &config.book_repo_configs {
         let mut manifest_entry = ManifestEntry::default();
+
+        info!(
+            "Processing {:?} {:?}",
+            &repo_config.repo_url, &repo_config.folder
+        );
 
         let repo_url = &repo_config.repo_url;
         let (_repo, mut repo_path) = clone_or_fetch_repo(
@@ -105,7 +116,8 @@ pub fn run(config: &Config) -> Result<Manifest, Error> {
             repo_path = repo_path.join(repo_folder);
         }
 
-        if let Err(e) = generate_epub(&mut manifest_entry, repo_path.as_path(), dest) {
+        if let Err(e) = generate_epub(&mut manifest_entry, repo_path.as_path(), dest, &epub_config)
+        {
             error!("Epub generation failed {}", e);
             continue;
         }
@@ -166,10 +178,17 @@ pub fn run(config: &Config) -> Result<Manifest, Error> {
 }
 
 /// Generate an EPUB from `path` to `dest`. Also modify manifest `entry` accordingly.
-fn generate_epub(entry: &mut ManifestEntry, path: &Path, dest: &Path) -> Result<(), Error> {
+fn generate_epub(
+    entry: &mut ManifestEntry,
+    path: &Path,
+    dest: &Path,
+    epub_config: &EpubConfig,
+) -> Result<(), Error> {
     let md = MDBook::load(path).map_err(|e| format_err!("Could not load mdbook: {}", e))?;
 
-    let mut ctx = RenderContext::new(md.root.clone(), md.book.clone(), md.config.clone(), dest);
+    let mut build_config = md.config.clone();
+    build_config.set("output.epub", epub_config).unwrap();
+    let mut ctx = RenderContext::new(md.root.clone(), md.book.clone(), build_config, dest);
 
     mdbook_epub::generate(&mut ctx).unwrap_or_else(|e| {
         error!("{}", e);
@@ -253,7 +272,13 @@ fn test_generate_epub() {
     let path = Path::new("tests").join("dummy");
     let dest = Path::new("tests").join("book");
 
-    generate_epub(&mut entry, path.as_path(), dest.as_path()).unwrap();
+    generate_epub(
+        &mut entry,
+        path.as_path(),
+        dest.as_path(),
+        &EpubConfig::default(),
+    )
+    .unwrap();
 
     assert!(entry.epub_size > 0, "Epub size should be bigger than 0");
     assert_eq!(entry.title, "Hello Rust", "Title doesn't match");

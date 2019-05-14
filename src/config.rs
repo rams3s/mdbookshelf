@@ -16,7 +16,9 @@ use toml::{self, Value};
 /// representation of `bookshelf.toml`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Config {
-    /// An array of BookRepoConfig
+    /// Additional CSS files.
+    pub additional_css: Vec<PathBuf>,
+    /// An array of BookRepoConfig.
     pub book_repo_configs: Vec<BookRepoConfig>,
     /// Destination directory.
     pub destination_dir: Option<PathBuf>,
@@ -50,6 +52,7 @@ impl FromStr for Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
+            additional_css: Vec::new(),
             book_repo_configs: Vec::new(),
             destination_dir: None,
             templates_dir: None,
@@ -76,6 +79,10 @@ impl<'de> Deserialize<'de> for Config {
             .remove("book")
             .and_then(|value| value.try_into().ok())
             .unwrap_or_default();
+        let additional_css: Vec<PathBuf> = table
+            .remove("additional-css")
+            .and_then(|value| value.try_into().ok())
+            .unwrap_or_default();
         let destination_dir: Option<PathBuf> = table
             .remove("destination-dir")
             .and_then(|value| value.try_into().ok())
@@ -94,6 +101,7 @@ impl<'de> Deserialize<'de> for Config {
             .unwrap_or_default();
 
         Ok(Config {
+            additional_css,
             book_repo_configs,
             destination_dir,
             templates_dir,
